@@ -1,0 +1,134 @@
+openapi: 3.0.1
+info:
+  title: Hyperliquid Go SDK - Leverage Management
+  description: API specification for managing leverage settings on the exchange
+  version: '1.0.0'
+servers:
+  - url: https://api.hyperliquid.xyz
+    description: Mainnet
+  - url: https://api.hyperliquid-testnet.xyz
+    description: Testnet
+  - url: http://localhost:3001
+    description: Local development
+paths:
+  /exchange:
+    post:
+      summary: Update leverage settings for an asset
+      description: Modify leverage and margin mode for trading positions
+      operationId: updateLeverage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum: [updateLeverage]
+                      description: Action type identifier
+                    asset:
+                      type: integer
+                      description: Asset ID to update leverage for
+                    isCross:
+                      type: boolean
+                      description: Whether to use cross margin (true) or isolated margin (false)
+                    leverage:
+                      type: integer
+                      minimum: 1
+                      maximum: 50
+                      description: Leverage multiplier
+                  required:
+                    - type
+                    - asset
+                    - isCross
+                    - leverage
+                nonce:
+                  type: integer
+                  format: int64
+                  description: Timestamp nonce for replay protection
+                signature:
+                  type: string
+                  description: Cryptographic signature of the action
+                vaultAddress:
+                  type: string
+                  nullable: true
+                  description: Vault address if trading on behalf of vault
+                expiresAfter:
+                  type: integer
+                  format: int64
+                  nullable: true
+                  description: Expiration timestamp for the action
+              required:
+                - action
+                - nonce
+                - signature
+            example:
+              action:
+                type: "updateLeverage"
+                asset: 0
+                isCross: true
+                leverage: 10
+              nonce: 1703098500000
+              signature: "0x1234567890abcdef..."
+              vaultAddress: null
+              expiresAfter: null
+      responses:
+        '200':
+          description: Successful leverage update
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: ["ok"]
+                  response:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        enum: ["updateLeverage"]
+                      data:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            enum: ["success"]
+              example:
+                status: "ok"
+                response:
+                  type: "updateLeverage"
+                  data:
+                    status: "success"
+        '400':
+          description: Bad request - invalid leverage value or parameters
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"
+              examples:
+                invalid_leverage:
+                  value:
+                    error: "Leverage must be between 1 and 50"
+                    code: 400
+                position_exists:
+                  value:
+                    error: "Cannot change leverage mode with open position"
+                    code: 400
+        '401':
+          description: Unauthorized - invalid signature
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"

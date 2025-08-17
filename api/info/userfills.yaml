@@ -1,0 +1,103 @@
+openapi: 3.0.1
+info:
+  title: Hyperliquid Go SDK - User Fills
+  description: API specification for retrieving user trade history and fills
+  version: '1.0.0'
+servers:
+  - url: https://api.hyperliquid.xyz
+    description: Mainnet
+  - url: https://api.hyperliquid-testnet.xyz
+    description: Testnet
+  - url: http://localhost:3001
+    description: Local development
+paths:
+  /info:
+    post:
+      summary: Retrieve user's trade fills
+      description: Get historical trade executions for a specific user
+      operationId: getUserFills
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [userFills]
+                  description: Request type identifier
+                user:
+                  $ref: "../components.yaml#/components/schemas/Address"
+                  description: User's Ethereum address
+                startTime:
+                  type: integer
+                  format: int64
+                  description: Start timestamp in milliseconds (optional)
+                endTime:
+                  type: integer
+                  format: int64
+                  description: End timestamp in milliseconds (optional)
+              required:
+                - type
+                - user
+            example:
+              type: "userFills"
+              user: "0x0000000000000000000000000000000000000000"
+              startTime: 1703097600000
+              endTime: 1703184000000
+      responses:
+        '200':
+          description: Successful response with user fills
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "../components.yaml#/components/schemas/UserFill"
+                description: "Array of user trade fills ordered by timestamp"
+              example:
+                - coin: "BTC"
+                  px: "43250.0"
+                  sz: "0.1"
+                  side: "B"
+                  time: 1703098500000
+                  startPosition: "0.0"
+                  dir: "Open Long"
+                  closedPnl: "0.0"
+                  hash: "0xabc123..."
+                  oid: 12345
+                  crossed: true
+                  fee: "4.325"
+                  liquidation: false
+                - coin: "ETH"
+                  px: "2650.75"
+                  sz: "1.5"
+                  side: "A"
+                  time: 1703099400000
+                  startPosition: "2.0"
+                  dir: "Close Long"
+                  closedPnl: "125.50"
+                  hash: "0xdef456..."
+                  oid: 12346
+                  crossed: false
+                  fee: "3.976"
+                  liquidation: false
+        '400':
+          description: Bad request - invalid address or time range
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"

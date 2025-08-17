@@ -1,0 +1,280 @@
+openapi: 3.0.1
+info:
+  title: Hyperliquid Go SDK - WebSocket Subscriptions
+  description: API specification for WebSocket real-time data subscriptions
+  version: '1.0.0'
+servers:
+  - url: wss://api.hyperliquid.xyz/ws
+    description: Mainnet WebSocket
+  - url: wss://api.hyperliquid-testnet.xyz/ws
+    description: Testnet WebSocket
+  - url: ws://localhost:3001/ws
+    description: Local development WebSocket
+paths:
+  /ws:
+    get:
+      summary: WebSocket connection for real-time data
+      description: Establish WebSocket connection for subscribing to live market data and user events
+      parameters:
+        - name: Upgrade
+          in: header
+          required: true
+          schema:
+            type: string
+            enum: [websocket]
+        - name: Connection
+          in: header
+          required: true
+          schema:
+            type: string
+            enum: [Upgrade]
+        - name: Sec-WebSocket-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: Sec-WebSocket-Version
+          in: header
+          required: true
+          schema:
+            type: string
+            enum: ["13"]
+      responses:
+        '101':
+          description: WebSocket connection established
+        '400':
+          description: Bad request - invalid WebSocket headers
+        '500':
+          description: Internal server error
+components:
+  schemas:
+    SubscriptionMessage:
+      type: object
+      properties:
+        method:
+          type: string
+          enum: [subscribe, unsubscribe]
+          description: Subscription action
+        subscription:
+          oneOf:
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum: [allMids]
+                  description: Subscribe to all mid prices
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum: [notification]
+                user:
+                  $ref: "../components.yaml#/components/schemas/Address"
+                  description: User address for notifications
+              required:
+                - user
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum: [webData2]
+                user:
+                  $ref: "../components.yaml#/components/schemas/Address"
+                  description: User address for L2 data
+              required:
+                - user
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum: [trades]
+                coin:
+                  type: string
+                  description: Asset symbol for trade data
+              required:
+                - coin
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum: [orderUpdates]
+                user:
+                  $ref: "../components.yaml#/components/schemas/Address"
+                  description: User address for order updates
+              required:
+                - user
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum: [userEvents]
+                user:
+                  $ref: "../components.yaml#/components/schemas/Address"
+                  description: User address for user events
+              required:
+                - user
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum: [candle]
+                coin:
+                  type: string
+                  description: Asset symbol
+                interval:
+                  type: string
+                  enum: ["1m", "5m", "15m", "1h", "4h", "1d"]
+                  description: Candle interval
+              required:
+                - coin
+                - interval
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum: [l2Book]
+                coin:
+                  type: string
+                  description: Asset symbol for order book
+              required:
+                - coin
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum: [activeAssetData]
+                user:
+                  $ref: "../components.yaml#/components/schemas/Address"
+                  description: User address for active asset data
+              required:
+                - user
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum: [activeAssetCtx]
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum: [userFills]
+                user:
+                  $ref: "../components.yaml#/components/schemas/Address"
+                  description: User address for fill updates
+              required:
+                - user
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum: [userFundings]
+                user:
+                  $ref: "../components.yaml#/components/schemas/Address"
+                  description: User address for funding updates
+              required:
+                - user
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum: [userNonFundingLedgerUpdates]
+                user:
+                  $ref: "../components.yaml#/components/schemas/Address"
+                  description: User address for ledger updates
+              required:
+                - user
+      required:
+        - method
+        - subscription
+      examples:
+        subscribe_allmids:
+          value:
+            method: "subscribe"
+            subscription:
+              type: "allMids"
+        subscribe_trades:
+          value:
+            method: "subscribe"
+            subscription:
+              type: "trades"
+              coin: "BTC"
+        subscribe_user_events:
+          value:
+            method: "subscribe"
+            subscription:
+              type: "userEvents"
+              user: "0x0000000000000000000000000000000000000000"
+        unsubscribe_trades:
+          value:
+            method: "unsubscribe"
+            subscription:
+              type: "trades"
+              coin: "BTC"
+    
+    WebSocketResponse:
+      type: object
+      properties:
+        channel:
+          type: string
+          description: Subscription channel identifier
+        data:
+          oneOf:
+            - type: object
+              description: All mids data
+              additionalProperties:
+                $ref: "../components.yaml#/components/schemas/FloatString"
+            - type: array
+              description: Trade data
+              items:
+                type: object
+                properties:
+                  coin:
+                    type: string
+                  side:
+                    type: string
+                    enum: ["A", "B"]
+                  px:
+                    $ref: "../components.yaml#/components/schemas/FloatString"
+                  sz:
+                    $ref: "../components.yaml#/components/schemas/FloatString"
+                  time:
+                    type: integer
+                    format: int64
+                  hash:
+                    type: string
+            - type: object
+              description: Order book data
+              properties:
+                coin:
+                  type: string
+                levels:
+                  type: array
+                  items:
+                    type: array
+                    items:
+                      $ref: "../components.yaml#/components/schemas/L2Level"
+                time:
+                  type: integer
+                  format: int64
+            - type: object
+              description: User event data
+              properties:
+                fills:
+                  type: array
+                  items:
+                    $ref: "../components.yaml#/components/schemas/UserFill"
+                liquidations:
+                  type: array
+                  items:
+                    type: object
+                funding:
+                  type: array
+                  items:
+                    type: object
+        timestamp:
+          type: integer
+          format: int64
+          description: Server timestamp
+      required:
+        - channel
+        - data

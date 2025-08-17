@@ -1,0 +1,110 @@
+openapi: 3.0.1
+info:
+  title: Hyperliquid Go SDK - User State
+  description: API specification for retrieving user account state and positions
+  version: '1.0.0'
+servers:
+  - url: https://api.hyperliquid.xyz
+    description: Mainnet
+  - url: https://api.hyperliquid-testnet.xyz
+    description: Testnet
+  - url: http://localhost:3001
+    description: Local development
+paths:
+  /info:
+    post:
+      summary: Retrieve a user's state
+      description: Get user's open positions, margin summary, and account information
+      operationId: getUserState
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [clearinghouseState]
+                  description: Request type identifier
+                user:
+                  $ref: "../components.yaml#/components/schemas/Address"
+                  description: User's Ethereum address
+              required:
+                - type
+                - user
+            example:
+              type: "clearinghouseState"
+              user: "0x0000000000000000000000000000000000000000"
+      responses:
+        '200':
+          description: Successful response with user state
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  assetPositions:
+                    type: array
+                    items:
+                      $ref: "../components.yaml#/components/schemas/AssetPosition"
+                    description: "User's positions across all assets"
+                  marginSummary:
+                    $ref: "../components.yaml#/components/schemas/MarginSummary"
+                    description: "Overall margin summary"
+                  crossMarginSummary:
+                    $ref: "../components.yaml#/components/schemas/MarginSummary"
+                    description: "Cross margin summary"
+                  withdrawable:
+                    $ref: "../components.yaml#/components/schemas/FloatString"
+                    description: "Amount available for withdrawal"
+                required:
+                  - assetPositions
+                  - marginSummary
+                  - crossMarginSummary
+                  - withdrawable
+              example:
+                assetPositions:
+                  - position:
+                      coin: "BTC"
+                      entryPx: "42500.0"
+                      leverage:
+                        type: "cross"
+                        value: 10
+                      liquidationPx: "38250.0"
+                      marginUsed: "425.0"
+                      maxTradeSzs: ["2.5", "2.5"]
+                      positionValue: "4250.0"
+                      returnOnEquity: "0.15"
+                      szi: "0.1"
+                      unrealizedPnl: "75.0"
+                    type: "oneWay"
+                marginSummary:
+                  accountValue: "10000.0"
+                  totalMarginUsed: "425.0"
+                  totalNtlPos: "4250.0"
+                  totalRawUsd: "9575.0"
+                crossMarginSummary:
+                  accountValue: "10000.0"
+                  totalMarginUsed: "425.0"
+                  totalNtlPos: "4250.0"
+                  totalRawUsd: "9575.0"
+                withdrawable: "9575.0"
+        '400':
+          description: Bad request - invalid address format
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"

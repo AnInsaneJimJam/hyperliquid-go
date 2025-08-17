@@ -1,2 +1,234 @@
-# API components configuration
-# This file will contain OpenAPI/Swagger component definitions
+components:
+  schemas:
+    FloatString:
+      type: string
+      pattern: "^\\d+\\.?\\d*$"
+      description: "Numeric value represented as string for precision"
+    Address:
+      type: string
+      pattern: "^0x[a-fA-F0-9]{40}$"
+      description: "Ethereum address format"
+    AssetPosition:
+      type: object
+      properties:
+        position:
+          type: object
+          properties:
+            coin:
+              type: string
+              description: "Asset symbol"
+            entryPx:
+              oneOf:
+                - type: string
+                - type: "null"
+              description: "Entry price or null if no position"
+            leverage:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: ["cross", "isolated"]
+                value:
+                  type: integer
+              description: "Leverage configuration"
+            liquidationPx:
+              type: string
+              description: "Liquidation price"
+            marginUsed:
+              $ref: "#/components/schemas/FloatString"
+            maxTradeSzs:
+              type: array
+              items:
+                $ref: "#/components/schemas/FloatString"
+              minItems: 2
+              maxItems: 2
+              description: "Max trade sizes [buy, sell]"
+            positionValue:
+              $ref: "#/components/schemas/FloatString"
+            returnOnEquity:
+              $ref: "#/components/schemas/FloatString"
+            szi:
+              $ref: "#/components/schemas/FloatString"
+              description: "Signed size (positive for long, negative for short)"
+            unrealizedPnl:
+              $ref: "#/components/schemas/FloatString"
+        type:
+          type: string
+          enum: ["oneWay"]
+    MarginSummary:
+      type: object
+      properties:
+        accountValue:
+          $ref: "#/components/schemas/FloatString"
+        totalMarginUsed:
+          $ref: "#/components/schemas/FloatString"
+        totalNtlPos:
+          $ref: "#/components/schemas/FloatString"
+        totalRawUsd:
+          $ref: "#/components/schemas/FloatString"
+    L2Level:
+      type: object
+      properties:
+        px:
+          $ref: "#/components/schemas/FloatString"
+          description: "Price level"
+        sz:
+          $ref: "#/components/schemas/FloatString"
+          description: "Size at this level"
+        n:
+          type: integer
+          description: "Number of orders at this level"
+      required:
+        - px
+        - sz
+        - n
+    Candle:
+      type: object
+      properties:
+        T:
+          type: integer
+          format: int64
+          description: "End timestamp of candle"
+        c:
+          $ref: "#/components/schemas/FloatString"
+          description: "Close price"
+        h:
+          $ref: "#/components/schemas/FloatString"
+          description: "High price"
+        i:
+          type: string
+          description: "Interval (1m, 5m, 15m, 1h, 4h, 1d)"
+        l:
+          $ref: "#/components/schemas/FloatString"
+          description: "Low price"
+        n:
+          type: integer
+          description: "Number of trades"
+        o:
+          $ref: "#/components/schemas/FloatString"
+          description: "Open price"
+        s:
+          type: string
+          description: "Symbol"
+        t:
+          type: integer
+          format: int64
+          description: "Start timestamp of candle"
+        v:
+          $ref: "#/components/schemas/FloatString"
+          description: "Volume"
+      required:
+        - T
+        - c
+        - h
+        - i
+        - l
+        - n
+        - o
+        - s
+        - t
+        - v
+    AssetInfo:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "Asset name/symbol"
+        szDecimals:
+          type: integer
+          description: "Size decimal places"
+      required:
+        - name
+        - szDecimals
+    AssetContext:
+      type: object
+      properties:
+        dayNtlVlm:
+          $ref: "#/components/schemas/FloatString"
+          description: "24h notional volume"
+        funding:
+          $ref: "#/components/schemas/FloatString"
+          description: "Funding rate"
+        markPx:
+          $ref: "#/components/schemas/FloatString"
+          description: "Mark price"
+        openInterest:
+          $ref: "#/components/schemas/FloatString"
+          description: "Open interest"
+        oraclePx:
+          $ref: "#/components/schemas/FloatString"
+          description: "Oracle price"
+        prevDayPx:
+          $ref: "#/components/schemas/FloatString"
+          description: "Previous day price"
+      required:
+        - dayNtlVlm
+        - funding
+        - markPx
+        - openInterest
+        - oraclePx
+        - prevDayPx
+    UserFill:
+      type: object
+      properties:
+        coin:
+          type: string
+        px:
+          $ref: "#/components/schemas/FloatString"
+        sz:
+          $ref: "#/components/schemas/FloatString"
+        side:
+          type: string
+          enum: ["A", "B"]
+        time:
+          type: integer
+          format: int64
+        startPosition:
+          $ref: "#/components/schemas/FloatString"
+        dir:
+          type: string
+        closedPnl:
+          $ref: "#/components/schemas/FloatString"
+        hash:
+          type: string
+        oid:
+          type: integer
+        crossed:
+          type: boolean
+        fee:
+          $ref: "#/components/schemas/FloatString"
+        liquidation:
+          type: boolean
+    OpenOrder:
+      type: object
+      properties:
+        coin:
+          type: string
+        side:
+          type: string
+          enum: ["A", "B"]
+        limitPx:
+          $ref: "#/components/schemas/FloatString"
+        sz:
+          $ref: "#/components/schemas/FloatString"
+        oid:
+          type: integer
+        timestamp:
+          type: integer
+          format: int64
+        origSz:
+          $ref: "#/components/schemas/FloatString"
+        cloid:
+          type: string
+          nullable: true
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: "Error message"
+        code:
+          type: integer
+          description: "Error code"
+      required:
+        - error

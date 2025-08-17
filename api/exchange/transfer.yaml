@@ -1,0 +1,168 @@
+openapi: 3.0.1
+info:
+  title: Hyperliquid Go SDK - Transfers
+  description: API specification for USD transfers and class transfers
+  version: '1.0.0'
+servers:
+  - url: https://api.hyperliquid.xyz
+    description: Mainnet
+  - url: https://api.hyperliquid-testnet.xyz
+    description: Testnet
+  - url: http://localhost:3001
+    description: Local development
+paths:
+  /exchange:
+    post:
+      summary: Execute USD transfers
+      description: Transfer USD between accounts or between perp and spot
+      operationId: usdTransfer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  properties:
+                    action:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          enum: [usdSend]
+                          description: Action type for USD transfer to another address
+                        destination:
+                          $ref: "../components.yaml#/components/schemas/Address"
+                          description: Destination address
+                        amount:
+                          $ref: "../components.yaml#/components/schemas/FloatString"
+                          description: Amount to transfer
+                        time:
+                          type: integer
+                          format: int64
+                          description: Timestamp
+                        signatureChainId:
+                          type: string
+                          description: Chain ID for signature
+                        hyperliquidChain:
+                          type: string
+                          enum: ["Mainnet", "Testnet"]
+                          description: Hyperliquid chain identifier
+                      required:
+                        - type
+                        - destination
+                        - amount
+                        - time
+                - type: object
+                  properties:
+                    action:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          enum: [usdClassTransfer]
+                          description: Action type for USD class transfer
+                        amount:
+                          type: string
+                          description: Amount to transfer (may include subaccount info)
+                        toPerp:
+                          type: boolean
+                          description: Transfer to perp (true) or spot (false)
+                        nonce:
+                          type: integer
+                          format: int64
+                          description: Timestamp nonce
+                        signatureChainId:
+                          type: string
+                          description: Chain ID for signature
+                        hyperliquidChain:
+                          type: string
+                          enum: ["Mainnet", "Testnet"]
+                          description: Hyperliquid chain identifier
+                      required:
+                        - type
+                        - amount
+                        - toPerp
+                        - nonce
+              properties:
+                nonce:
+                  type: integer
+                  format: int64
+                  description: Timestamp nonce for replay protection
+                signature:
+                  type: string
+                  description: Cryptographic signature of the action
+              required:
+                - action
+                - nonce
+                - signature
+            examples:
+              usd_send:
+                value:
+                  action:
+                    type: "usdSend"
+                    destination: "0x1234567890123456789012345678901234567890"
+                    amount: "1000.0"
+                    time: 1703098500000
+                    signatureChainId: "0x66eee"
+                    hyperliquidChain: "Testnet"
+                  nonce: 1703098500000
+                  signature: "0x1234567890abcdef..."
+              usd_class_transfer:
+                value:
+                  action:
+                    type: "usdClassTransfer"
+                    amount: "500.0"
+                    toPerp: true
+                    nonce: 1703098500000
+                    signatureChainId: "0x66eee"
+                    hyperliquidChain: "Testnet"
+                  nonce: 1703098500000
+                  signature: "0x1234567890abcdef..."
+      responses:
+        '200':
+          description: Successful transfer
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: ["ok"]
+                  response:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        enum: ["usdSend", "usdClassTransfer"]
+                      data:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            enum: ["success"]
+              example:
+                status: "ok"
+                response:
+                  type: "usdSend"
+                  data:
+                    status: "success"
+        '400':
+          description: Bad request - insufficient balance or invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"
+        '401':
+          description: Unauthorized - invalid signature
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"

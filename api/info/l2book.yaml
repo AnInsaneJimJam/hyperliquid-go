@@ -1,0 +1,104 @@
+openapi: 3.0.1
+info:
+  title: Hyperliquid Go SDK - L2 Order Book
+  description: API specification for retrieving Level 2 order book data
+  version: '1.0.0'
+servers:
+  - url: https://api.hyperliquid.xyz
+    description: Mainnet
+  - url: https://api.hyperliquid-testnet.xyz
+    description: Testnet
+  - url: http://localhost:3001
+    description: Local development
+paths:
+  /info:
+    post:
+      summary: Retrieve L2 book snapshot
+      description: Returns the top levels of the order book with bids and asks
+      operationId: getL2Book
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [l2Book]
+                  description: Request type identifier
+                coin:
+                  type: string
+                  description: Asset symbol to get order book for
+              required:
+                - type
+                - coin
+            example:
+              type: l2Book
+              coin: "BTC"
+      responses:
+        '200':
+          description: Successful response with order book data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  levels:
+                    type: array
+                    items:
+                      type: array
+                      items:
+                        $ref: "../components.yaml#/components/schemas/L2Level"
+                    minItems: 2
+                    maxItems: 2
+                    description: "[bids, asks] - array of bid levels and ask levels"
+                  coin:
+                    type: string
+                    description: "Asset symbol"
+                  time:
+                    type: integer
+                    format: int64
+                    description: "Timestamp of the snapshot"
+              example:
+                levels:
+                  - # Bids (highest to lowest)
+                    - px: "43200.0"
+                      sz: "0.5"
+                      n: 3
+                    - px: "43190.0"
+                      sz: "1.2"
+                      n: 5
+                    - px: "43180.0"
+                      sz: "0.8"
+                      n: 2
+                  - # Asks (lowest to highest)
+                    - px: "43210.0"
+                      sz: "0.7"
+                      n: 2
+                    - px: "43220.0"
+                      sz: "1.1"
+                      n: 4
+                    - px: "43230.0"
+                      sz: "0.9"
+                      n: 3
+                coin: "BTC"
+                time: 1703097600000
+        '400':
+          description: Bad request - invalid coin symbol
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"
+        '404':
+          description: Coin not found or not actively trading
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"

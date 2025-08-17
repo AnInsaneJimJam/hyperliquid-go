@@ -1,0 +1,171 @@
+openapi: 3.0.1
+info:
+  title: Hyperliquid Go SDK - Cancel Orders
+  description: API specification for canceling orders on the exchange
+  version: '1.0.0'
+servers:
+  - url: https://api.hyperliquid.xyz
+    description: Mainnet
+  - url: https://api.hyperliquid-testnet.xyz
+    description: Testnet
+  - url: http://localhost:3001
+    description: Local development
+paths:
+  /exchange:
+    post:
+      summary: Cancel orders on the exchange
+      description: Cancel single or multiple orders by order ID or client order ID
+      operationId: cancelOrders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  properties:
+                    action:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          enum: [cancel]
+                          description: Action type for canceling by order ID
+                        cancels:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              a:
+                                type: integer
+                                description: Asset ID
+                              o:
+                                type: integer
+                                description: Order ID to cancel
+                            required:
+                              - a
+                              - o
+                      required:
+                        - type
+                        - cancels
+                - type: object
+                  properties:
+                    action:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          enum: [cancelByCloid]
+                          description: Action type for canceling by client order ID
+                        cancels:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              asset:
+                                type: integer
+                                description: Asset ID
+                              cloid:
+                                type: string
+                                description: Client order ID to cancel
+                            required:
+                              - asset
+                              - cloid
+                      required:
+                        - type
+                        - cancels
+              properties:
+                nonce:
+                  type: integer
+                  format: int64
+                  description: Timestamp nonce for replay protection
+                signature:
+                  type: string
+                  description: Cryptographic signature of the action
+                vaultAddress:
+                  type: string
+                  nullable: true
+                  description: Vault address if trading on behalf of vault
+                expiresAfter:
+                  type: integer
+                  format: int64
+                  nullable: true
+                  description: Expiration timestamp for the action
+              required:
+                - action
+                - nonce
+                - signature
+            examples:
+              cancel_by_oid:
+                value:
+                  action:
+                    type: "cancel"
+                    cancels:
+                      - a: 0
+                        o: 12345
+                      - a: 1
+                        o: 12346
+                  nonce: 1703098500000
+                  signature: "0x1234567890abcdef..."
+                  vaultAddress: null
+              cancel_by_cloid:
+                value:
+                  action:
+                    type: "cancelByCloid"
+                    cancels:
+                      - asset: 0
+                        cloid: "my-order-1"
+                      - asset: 1
+                        cloid: "my-order-2"
+                  nonce: 1703098500000
+                  signature: "0x1234567890abcdef..."
+                  vaultAddress: null
+      responses:
+        '200':
+          description: Successful order cancellation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: ["ok"]
+                  response:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        enum: ["cancel", "cancelByCloid"]
+                      data:
+                        type: object
+                        properties:
+                          statuses:
+                            type: array
+                            items:
+                              type: string
+                              enum: ["success", "orderNotFound", "rateLimit"]
+              example:
+                status: "ok"
+                response:
+                  type: "cancel"
+                  data:
+                    statuses: ["success", "success"]
+        '400':
+          description: Bad request - invalid parameters or signature
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"
+        '401':
+          description: Unauthorized - invalid signature
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"

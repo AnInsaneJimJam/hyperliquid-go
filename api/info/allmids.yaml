@@ -1,0 +1,61 @@
+openapi: 3.0.1
+info:
+  title: Hyperliquid Go SDK
+  description: API specification for interacting with the Hyperliquid DEX
+  version: '1.0.0'
+servers:
+  - url: https://api.hyperliquid.xyz
+    description: Mainnet
+  - url: https://api.hyperliquid-testnet.xyz
+    description: Testnet
+  - url: http://localhost:3001
+    description: Local development
+paths:
+  /info:
+    post:
+      summary: Retrieve all mids for all actively traded coins
+      description: Returns mid prices for all assets currently trading on the exchange
+      operationId: getAllMids
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [allMids]
+                  description: Request type identifier
+              required:
+                - type
+            example:
+              type: allMids
+      responses:
+        '200':
+          description: Successful response with mid prices
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: "../components.yaml#/components/schemas/FloatString"
+                description: "Map of coin symbols to their mid prices"
+              example:
+                BTC: "43250.5"
+                ETH: "2650.75"
+                SOL: "98.25"
+                AVAX: "18.3695"
+                ARB: "1.22965"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"

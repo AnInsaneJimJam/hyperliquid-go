@@ -1,0 +1,120 @@
+openapi: 3.0.1
+info:
+  title: Hyperliquid Go SDK - Candle Data
+  description: API specification for retrieving candlestick/OHLCV data
+  version: '1.0.0'
+servers:
+  - url: https://api.hyperliquid.xyz
+    description: Mainnet
+  - url: https://api.hyperliquid-testnet.xyz
+    description: Testnet
+  - url: http://localhost:3001
+    description: Local development
+paths:
+  /info:
+    post:
+      summary: Retrieve candle snapshot
+      description: Get historical candlestick data for a specific asset and time range
+      operationId: getCandleSnapshot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [candleSnapshot]
+                  description: Request type identifier
+                req:
+                  type: object
+                  properties:
+                    coin:
+                      type: string
+                      description: Asset symbol to get candle data for
+                    interval:
+                      type: string
+                      enum: ["1m", "5m", "15m", "1h", "4h", "1d"]
+                      description: Time interval for candles
+                    startTime:
+                      type: integer
+                      format: int64
+                      description: Start timestamp in milliseconds
+                    endTime:
+                      type: integer
+                      format: int64
+                      description: End timestamp in milliseconds
+                  required:
+                    - coin
+                    - interval
+                    - startTime
+                    - endTime
+              required:
+                - type
+                - req
+            example:
+              type: candleSnapshot
+              req:
+                coin: "BTC"
+                interval: "15m"
+                startTime: 1703097600000
+                endTime: 1703184000000
+      responses:
+        '200':
+          description: Successful response with candle data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "../components.yaml#/components/schemas/Candle"
+                description: "Array of candle data ordered by timestamp"
+              example:
+                - T: 1703098499999
+                  c: "43250.0"
+                  h: "43300.0"
+                  i: "15m"
+                  l: "43200.0"
+                  n: 189
+                  o: "43220.0"
+                  s: "BTC"
+                  t: 1703097600000
+                  v: "12.5639"
+                - T: 1703099399999
+                  c: "43280.0"
+                  h: "43320.0"
+                  i: "15m"
+                  l: "43240.0"
+                  n: 156
+                  o: "43250.0"
+                  s: "BTC"
+                  t: 1703098500000
+                  v: "8.7421"
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"
+              examples:
+                invalid_interval:
+                  value:
+                    error: "Invalid interval. Must be one of: 1m, 5m, 15m, 1h, 4h, 1d"
+                    code: 400
+                invalid_time_range:
+                  value:
+                    error: "Invalid time range. startTime must be less than endTime"
+                    code: 400
+        '404':
+          description: Coin not found
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"

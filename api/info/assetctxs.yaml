@@ -1,0 +1,89 @@
+openapi: 3.0.1
+info:
+  title: Hyperliquid Go SDK - Asset Contexts
+  description: API specification for retrieving metadata and context information for actively trading assets
+  version: '1.0.0'
+servers:
+  - url: https://api.hyperliquid.xyz
+    description: Mainnet
+  - url: https://api.hyperliquid-testnet.xyz
+    description: Testnet
+  - url: http://localhost:3001
+    description: Local development
+paths:
+  /info:
+    post:
+      summary: Retrieve metadata and context information for actively trading assets
+      description: Get asset metadata (universe) and current market context data
+      operationId: getMetaAndAssetCtxs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [metaAndAssetCtxs]
+                  description: Request type identifier
+              required:
+                - type
+            example:
+              type: "metaAndAssetCtxs"
+      responses:
+        '200':
+          description: Successful response with asset metadata and contexts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - type: object
+                      properties:
+                        universe:
+                          type: array
+                          items:
+                            $ref: "../components.yaml#/components/schemas/AssetInfo"
+                          description: "Asset metadata including names and decimals"
+                      description: "First element: asset metadata"
+                    - type: array
+                      items:
+                        $ref: "../components.yaml#/components/schemas/AssetContext"
+                      description: "Second element: array of asset contexts with market data"
+                minItems: 2
+                maxItems: 2
+                description: "[metadata, contexts] - asset info and market data"
+              example:
+                - universe:
+                    - name: "BTC"
+                      szDecimals: 5
+                    - name: "ETH"
+                      szDecimals: 4
+                    - name: "SOL"
+                      szDecimals: 3
+                - - dayNtlVlm: "125000000.50"
+                    funding: "-0.0000886"
+                    markPx: "43250.5"
+                    openInterest: "1250.75"
+                    oraclePx: "43245.0"
+                    prevDayPx: "42800.0"
+                  - dayNtlVlm: "85000000.25"
+                    funding: "0.0000125"
+                    markPx: "2650.75"
+                    openInterest: "8500.25"
+                    oraclePx: "2652.0"
+                    prevDayPx: "2625.50"
+                  - dayNtlVlm: "15000000.75"
+                    funding: "0.0000045"
+                    markPx: "98.25"
+                    openInterest: "125000.50"
+                    oraclePx: "98.30"
+                    prevDayPx: "95.80"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"

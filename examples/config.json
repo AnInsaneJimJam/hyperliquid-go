@@ -1,0 +1,19 @@
+{
+    "keystore_path": "",
+    "secret_key": "0xa1ff3f041f7b1b9e709ef163dc45234aabaa0fb1d40f187b1e031848f644e962",
+    "account_address": "0x1bb66373659B6B0Cb285Fc8248991ba62c5d75C1",
+    "multi_sig": {
+        "authorized_users": [
+            {
+                "comment": "signer 1",
+                "secret_key": "",
+                "account_address": ""
+            },
+            {
+                "comment": "signer 2",
+                "secret_key": "",
+                "account_address": ""
+            }
+        ]
+    }
+}

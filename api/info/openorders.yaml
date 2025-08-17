@@ -1,0 +1,83 @@
+openapi: 3.0.1
+info:
+  title: Hyperliquid Go SDK - Open Orders
+  description: API specification for retrieving user's open orders
+  version: '1.0.0'
+servers:
+  - url: https://api.hyperliquid.xyz
+    description: Mainnet
+  - url: https://api.hyperliquid-testnet.xyz
+    description: Testnet
+  - url: http://localhost:3001
+    description: Local development
+paths:
+  /info:
+    post:
+      summary: Retrieve user's open orders
+      description: Get all currently open orders for a specific user
+      operationId: getOpenOrders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [openOrders]
+                  description: Request type identifier
+                user:
+                  $ref: "../components.yaml#/components/schemas/Address"
+                  description: User's Ethereum address
+              required:
+                - type
+                - user
+            example:
+              type: "openOrders"
+              user: "0x0000000000000000000000000000000000000000"
+      responses:
+        '200':
+          description: Successful response with open orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "../components.yaml#/components/schemas/OpenOrder"
+                description: "Array of user's open orders"
+              example:
+                - coin: "BTC"
+                  side: "B"
+                  limitPx: "43000.0"
+                  sz: "0.1"
+                  oid: 12345
+                  timestamp: 1703098500000
+                  origSz: "0.1"
+                  cloid: "my-order-1"
+                - coin: "ETH"
+                  side: "A"
+                  limitPx: "2700.0"
+                  sz: "2.0"
+                  oid: 12346
+                  timestamp: 1703098600000
+                  origSz: "2.5"
+                  cloid: null
+        '400':
+          description: Bad request - invalid address format
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"

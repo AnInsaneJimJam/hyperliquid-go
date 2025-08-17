@@ -1,0 +1,198 @@
+openapi: 3.0.1
+info:
+  title: Hyperliquid Go SDK - Modify Orders
+  description: API specification for modifying existing orders on the exchange
+  version: '1.0.0'
+servers:
+  - url: https://api.hyperliquid.xyz
+    description: Mainnet
+  - url: https://api.hyperliquid-testnet.xyz
+    description: Testnet
+  - url: http://localhost:3001
+    description: Local development
+paths:
+  /exchange:
+    post:
+      summary: Modify existing orders on the exchange
+      description: Update order parameters for existing orders
+      operationId: modifyOrders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum: [batchModify]
+                      description: Action type identifier
+                    modifies:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          oid:
+                            type: integer
+                            description: Order ID to modify
+                          order:
+                            type: object
+                            properties:
+                              a:
+                                type: integer
+                                description: Asset ID
+                              b:
+                                type: boolean
+                                description: Is buy order
+                              p:
+                                $ref: "../components.yaml#/components/schemas/FloatString"
+                                description: New limit price
+                              s:
+                                $ref: "../components.yaml#/components/schemas/FloatString"
+                                description: New size
+                              r:
+                                type: boolean
+                                description: Reduce only flag
+                              t:
+                                type: object
+                                properties:
+                                  limit:
+                                    type: object
+                                    properties:
+                                      tif:
+                                        type: string
+                                        enum: ["Alo", "Ioc", "Gtc"]
+                                        description: Time in force
+                                  trigger:
+                                    type: object
+                                    properties:
+                                      triggerPx:
+                                        $ref: "../components.yaml#/components/schemas/FloatString"
+                                      isMarket:
+                                        type: boolean
+                                      tpsl:
+                                        type: string
+                                        enum: ["tp", "sl"]
+                                description: Order type configuration
+                              c:
+                                type: string
+                                nullable: true
+                                description: Client order ID
+                            required:
+                              - a
+                              - b
+                              - p
+                              - s
+                              - r
+                              - t
+                        required:
+                          - oid
+                          - order
+                  required:
+                    - type
+                    - modifies
+                nonce:
+                  type: integer
+                  format: int64
+                  description: Timestamp nonce for replay protection
+                signature:
+                  type: string
+                  description: Cryptographic signature of the action
+                vaultAddress:
+                  type: string
+                  nullable: true
+                  description: Vault address if trading on behalf of vault
+                expiresAfter:
+                  type: integer
+                  format: int64
+                  nullable: true
+                  description: Expiration timestamp for the action
+              required:
+                - action
+                - nonce
+                - signature
+            example:
+              action:
+                type: "batchModify"
+                modifies:
+                  - oid: 12345
+                    order:
+                      a: 0
+                      b: true
+                      p: "42500.0"
+                      s: "0.15"
+                      r: false
+                      t:
+                        limit:
+                          tif: "Gtc"
+                      c: "my-order-1-modified"
+              nonce: 1703098500000
+              signature: "0x1234567890abcdef..."
+              vaultAddress: null
+              expiresAfter: null
+      responses:
+        '200':
+          description: Successful order modification
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: ["ok"]
+                  response:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        enum: ["batchModify"]
+                      data:
+                        type: object
+                        properties:
+                          statuses:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                resting:
+                                  type: object
+                                  properties:
+                                    oid:
+                                      type: integer
+                              description: "Modified order status"
+              example:
+                status: "ok"
+                response:
+                  type: "batchModify"
+                  data:
+                    statuses:
+                      - resting:
+                          oid: 12345
+        '400':
+          description: Bad request - invalid order parameters or signature
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"
+        '401':
+          description: Unauthorized - invalid signature
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "../components.yaml#/components/schemas/Error"
