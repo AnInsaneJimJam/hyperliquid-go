@@ -7,19 +7,6 @@
 [![Performance](https://img.shields.io/badge/Performance-3x%20Faster-brightgreen)]()
 [![Memory](https://img.shields.io/badge/Memory-5x%20Less-orange)]()
 
-## 🏆 Performance Benchmarks
-
-**Go SDK vs Python SDK Performance Comparison:**
-
-| Operation | Go SDK | Python SDK | Improvement |
-|-----------|--------|------------|-------------|
-| Order Placement | **0.8ms** | 2.4ms | **3x faster** |
-| Market Data Fetch | **1.2ms** | 4.1ms | **3.4x faster** |
-| WebSocket Connection | **0.3ms** | 1.8ms | **6x faster** |
-| Memory Usage | **12MB** | 65MB | **5.4x less** |
-| Cold Start Time | **45ms** | 850ms | **19x faster** |
-| Concurrent Orders | **10,000/s** | 1,200/s | **8.3x higher** |
-
 *Benchmarks run on AWS c5.large instance, averaged over 10,000 operations*
 
 ## ⚡ Why Choose Go SDK?
